@@ -48,6 +48,9 @@ projectKey : JUNGLETFT
 | Jude 임주원 | BE (platform/credit/payment/auth) | `712020:795a1d4b-701c-4f6b-b084-508a51a0d77d` |
 | Charlie 김채욱 | BE | `712020:9d7c1924-444b-4f31-b202-0898886dd92f` |
 | Lesser 장병익 | AI (Levi/OCR engine) | `712020:0a654e23-7dad-4134-bcef-973bb517c29c` |
+| Theo | Lead | `712020:4508a39d-cf85-467a-bdf0-d5f149e54dc4` |
+| Lucas 박병욱 | SE | `712020:b36e21de-b379-4623-ab03-135dd41a8e78` |
+| Stella | SE | `712020:247d1b9b-8f18-4b02-96a0-dda174bf8a6f` |
 
 ---
 
