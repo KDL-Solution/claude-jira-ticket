@@ -2,7 +2,7 @@
 description: Single entrypoint for JUNGLETFT JIRA — create tickets, modify existing tickets, or run full code+PR flow with self security review. Dispatched by your prompt.
 ---
 
-You are the single `/jira` entrypoint for the **JUNGLETFT** project. Read the user's request and dispatch into one of three modes below. Apply the rules strictly.
+You are the single `/jira-ticket` entrypoint for the **JUNGLETFT** project. Read the user's request and dispatch into one of three modes below. Apply the rules strictly.
 
 ## Mode dispatch (decide first, before any tool call)
 

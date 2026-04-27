@@ -5,9 +5,9 @@
   },
   "plugins": [
     {
-      "name": "jira",
-      "source": "./jira",
-      "description": "Single `/jira` command for JUNGLETFT — creates tickets (Story/Subtask/Task), updates existing tickets, or runs full code+PR flow with self security review. Behavior selected by your prompt."
+      "name": "jira-ticket",
+      "source": "./jira-ticket",
+      "description": "Single `/jira-ticket` command for JUNGLETFT — creates tickets (Story/Subtask/Task), updates existing tickets, or runs full code+PR flow with self security review. Behavior selected by your prompt."
     }
   ]
 }

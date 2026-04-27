@@ -1,0 +1,9 @@
+{
+  "name": "jira-ticket",
+  "description": "Single `/jira-ticket` command for JUNGLETFT — dispatches between ticket creation (Story/Subtask/Task), ticket modification, and full code+PR flow (with self security review) based on your prompt.",
+  "version": "0.2.1",
+  "author": {
+    "name": "KDL Solution"
+  },
+  "license": "MIT"
+}

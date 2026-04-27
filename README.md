@@ -1,8 +1,8 @@
 # claude-jira-pr
 
-JUNGLETFT JIRA 티켓 생성 / 수정 + (선택) 코드 수정 → PR 자동화를 **단일 `/jira` 슬래시 커맨드**로 묶은 Claude Code 플러그인.
+JUNGLETFT JIRA 티켓 생성 / 수정 + (선택) 코드 수정 → PR 자동화를 **단일 `/jira-ticket` 슬래시 커맨드**로 묶은 Claude Code 플러그인.
 
-`/jira` 한 번이면 KDL 티켓 컨벤션(Story/Subtask/Task 구조, 에픽 매핑, 담당자 ID, description 포맷) + 기존 티켓 수정 + `develop` 기반 PR 플로우 + `/security-review` 셀프 보안 리뷰까지 자동 적용된다.
+`/jira-ticket` 한 번이면 KDL 티켓 컨벤션(Story/Subtask/Task 구조, 에픽 매핑, 담당자 ID, description 포맷) + 기존 티켓 수정 + `develop` 기반 PR 플로우 + `/security-review` 셀프 보안 리뷰까지 자동 적용된다.
 
 ---
 
@@ -31,7 +31,7 @@ gh auth status || gh auth login
 
 ```markdown
 # JIRA 티켓 / PR 자동화 규칙
-JIRA 티켓 생성 / 수정 또는 코드+PR 자동화 요청 시 `/jira` 슬래시 커맨드의 규칙을 따른다.
+JIRA 티켓 생성 / 수정 또는 코드+PR 자동화 요청 시 `/jira-ticket` 슬래시 커맨드의 규칙을 따른다.
 ```
 
 ### 2. 플러그인 설치
@@ -40,14 +40,14 @@ Claude Code 안에서:
 
 ```
 /plugin marketplace add https://github.com/KDL-Solution/claude-jira-pr.git
-/plugin install jira@claude-jira-pr
+/plugin install jira-ticket@claude-jira-pr
 ```
 
 설치 후 Claude Code 재시작 (⌘⇧P → `Developer: Reload Window`).
 
 ### 3. 사용
 
-`/jira` 다음에 자연어로 요청을 적는다. 프롬프트 내용으로 **3가지 모드**가 자동 분기된다.
+`/jira-ticket` 다음에 자연어로 요청을 적는다. 프롬프트 내용으로 **3가지 모드**가 자동 분기된다.
 
 | Mode | 분기 조건 | 예시 |
 |---|---|---|
@@ -62,7 +62,7 @@ Claude Code 안에서:
 ### 케이스 A — Task 티켓만 생성
 
 ```
-/jira Jude 담당으로 작업 티켓 하나 만들어줘.
+/jira-ticket Jude 담당으로 작업 티켓 하나 만들어줘.
 - 제목: [BE] 5월 1일부터 신규 가입 유저 Free 플랜 초기 크레딧 100 → 10 변경
 - 마감: 4/30
 - 우선순위: High
@@ -72,7 +72,7 @@ Claude Code 안에서:
 ### 케이스 B — Task 티켓 + PR 까지 (Code+PR 모드)
 
 ```
-/jira Jude 담당으로 작업 티켓 + PR 같이 부탁해.
+/jira-ticket Jude 담당으로 작업 티켓 + PR 같이 부탁해.
 - 제목: [BE] 신규 가입 유저 Free 플랜 초기 크레딧 100 → 10 변경
 - 관련 파일: src/modules/credit/
 - 마감: 4/30, Priority High
@@ -83,13 +83,13 @@ Claude Code 안에서:
 ### 케이스 C — 기존 티켓 기반 PR
 
 ```
-/jira JUNGLETFT-834 기반으로 코드 수정하고 PR 올려줘.
+/jira-ticket JUNGLETFT-834 기반으로 코드 수정하고 PR 올려줘.
 ```
 
 ### 케이스 D — Story + 하위 작업 한 번에
 
 ```
-/jira [기능명] Story 만들어줘.
+/jira-ticket [기능명] Story 만들어줘.
 - 기능 요약: [무엇을, 왜]
 - 에픽: 추가 기능 개발
 - 우선순위: High
@@ -105,11 +105,11 @@ Claude Code 안에서:
 ### 케이스 E — 기존 티켓 수정 (Update 모드)
 
 ```
-/jira JUNGLETFT-656 마감일 4/30, Riley 대신 Jude로 담당 변경해줘.
+/jira-ticket JUNGLETFT-656 마감일 4/30, Riley 대신 Jude로 담당 변경해줘.
 ```
 
 ```
-/jira 728, 725, 716 마감 5/13으로 한꺼번에 바꿔줘.
+/jira-ticket 728, 725, 716 마감 5/13으로 한꺼번에 바꿔줘.
 ```
 
 ### 케이스 F — 셀프 리뷰 스킵
@@ -117,7 +117,7 @@ Claude Code 안에서:
 PR 본문에 셀프 리뷰 코멘트가 따로 붙지 않게 하려면 프롬프트에 `"셀프 리뷰 스킵"` 포함:
 
 ```
-/jira JUNGLETFT-834 기반으로 PR 올려줘. 셀프 리뷰 스킵.
+/jira-ticket JUNGLETFT-834 기반으로 PR 올려줘. 셀프 리뷰 스킵.
 ```
 
 ---
@@ -165,7 +165,7 @@ Update 모드에서는 destructive 변경(상태 `완료` 로 닫기, descriptio
 | `JIRA 프로젝트 조회 못 함` | Atlassian MCP 미연결 — 1-1 단계 재확인 |
 | `gh: command not found` | GitHub CLI 미설치 → `brew install gh && gh auth login` |
 | `pre-commit 실패` | `uv sync --all-groups` 후 다시 시도. 3회 실패 시 플러그인이 자동 중단 |
-| `transition id 3 invalid` | JIRA 워크플로우 변경됨 — 관리자에게 `수정 완료` transition id 확인 후 `jira/commands/jira.md` Mode=Code+PR step 11 수정 |
+| `transition id 3 invalid` | JIRA 워크플로우 변경됨 — 관리자에게 `수정 완료` transition id 확인 후 `jira-ticket/commands/jira-ticket.md` Mode=Code+PR step 11 수정 |
 | `epic 자동 추론이 자꾸 틀림` | 프롬프트에 epic 명시. "에픽 지정 규칙" 참고 |
 
 ---
