@@ -1,8 +1,18 @@
 ---
-description: Create JIRA tickets (Story/Subtask/Task) on JUNGLETFT, and optionally implement code + open a PR + run self security review
+description: Single entrypoint for JUNGLETFT JIRA — create tickets, modify existing tickets, or run full code+PR flow with self security review. Dispatched by your prompt.
 ---
 
-You are creating JIRA tickets on the **JUNGLETFT** project — and optionally implementing the code + opening a PR — applying the rules below strictly. Two flows are supported and the user's prompt selects between them.
+You are the single `/jira` entrypoint for the **JUNGLETFT** project. Read the user's request and dispatch into one of three modes below. Apply the rules strictly.
+
+## Mode dispatch (decide first, before any tool call)
+
+| Mode | Trigger | Action |
+|---|---|---|
+| **Create** | user describes a new ticket (no existing JIRA key referenced as the target, no PR trigger phrase) | Create JIRA ticket(s) per the rules. Stop. |
+| **Update** | user references an existing key (`JUNGLETFT-XXX`) and asks to modify (담당자/마감/우선순위/상태/제목/description/링크/코멘트) | Edit/transition/comment/link the ticket(s) per the Update operations section. Stop. |
+| **Code + PR** | one of these phrases is present: `"PR까지 만들어줘"` / `"코드 수정하고 PR 올려줘"` / `"브랜치까지 올려줘"` | Create or read ticket → branch → implement → ruff/mypy/pytest → commit → push → PR → `/security-review` → JIRA sync. **Run all 12 steps continuously without confirmation between them** (see stop conditions). |
+
+If the request is ambiguous (e.g., references a key but the verb is unclear), ask once which mode the user wants and proceed.
 
 ---
 
@@ -36,20 +46,33 @@ projectKey : JUNGLETFT
 | Leon | FE | `712020:37f69dd2-253c-4fd7-938c-b3373c1f11fd` |
 | Riley 최범조 | BE (OCR/pipeline) | `712020:454f0674-5a8b-4879-aa0a-205b6487faf9` |
 | Jude 임주원 | BE (platform/credit/payment/auth) | `712020:795a1d4b-701c-4f6b-b084-508a51a0d77d` |
+| Charlie 김채욱 | BE | `712020:9d7c1924-444b-4f31-b202-0898886dd92f` |
 | Lesser 장병익 | AI (Levi/OCR engine) | `712020:0a654e23-7dad-4134-bcef-973bb517c29c` |
 
 ---
 
-## Two flows — selected by trigger phrase in user prompt
+## Update operations (Mode = Update)
 
-| Flow | Trigger phrases | Behavior |
+| 요청 유형 | MCP 도구 | 비고 |
 |---|---|---|
-| **Ticket only** | (none) | Create JIRA ticket(s) and stop |
-| **Ticket + PR** | "PR까지 만들어줘" / "코드 수정하고 PR 올려줘" / "브랜치까지 올려줘" | Create ticket → branch → implement → ruff/mypy/pytest → commit → push → PR → `/security-review` → JIRA sync. **Run all steps continuously without asking for confirmation between them** (see stop conditions below). |
+| 필드 변경 (assignee, duedate, priority, summary, description, parent 등) | `mcp__atlassian__editJiraIssue` | `fields` 객체로 한 번에 여러 필드 변경 가능 |
+| 상태 전환 | `mcp__atlassian__transitionJiraIssue` | 자주 쓰는 id: `3` (수정 완료), `41` (완료). 다른 상태는 `getTransitionsForJiraIssue` 로 확인 |
+| 코멘트 추가 | `mcp__atlassian__addCommentToJiraIssue` | URL 등은 `[text](url)` 명시적 마크다운 링크로, `contentFormat: "markdown"` |
+| 이슈 링크 추가 | `mcp__atlassian__createIssueLink` | type: `Relates` / `Blocks` / `Duplicate` |
+| 현재 상태 조회 | `mcp__atlassian__getJiraIssue` | 변경 전 확인용 |
+
+### Update safety rules
+
+1. **변경 전 현재 값 조회** — `getJiraIssue` 로 변경 대상 필드의 현재 값 확인. 이미 같은 값이면 "이미 그 값" 보고하고 변경 안 함.
+2. **assignee 변경 시 accountId 필수** — 이름만 받았으면 위 Assignees 표에서 accountId 변환. 표에 없으면 `mcp__atlassian__lookupJiraAccountId` 또는 user 에게 확인.
+3. **duedate 형식** — `YYYY-MM-DD` 만 허용. user 가 `4/30` 처럼 줬으면 현재 연도 기준으로 변환.
+4. **여러 필드 한 번에** — 동일 티켓 여러 필드 변경은 `editJiraIssue` 한 번 호출로 통합.
+5. **여러 티켓 일괄** — `728, 725, 716 마감 5/13으로` 같이 여러 키 요청이면 병렬 호출.
+6. **destructive 변경은 한 번 확인** — 상태를 `완료` 로 닫거나 description 통째 덮어쓰기 등 되돌리기 어려운 변경은 user 에게 한 번 확인 후 진행.
 
 ---
 
-## Ticket creation rules
+## Ticket creation rules (Mode = Create or Code+PR)
 
 ### Story (스토리)
 
@@ -128,7 +151,7 @@ projectKey : JUNGLETFT
 
 ---
 
-## Code + PR flow (when triggered)
+## Code + PR flow (Mode = Code+PR)
 
 ### When NOT to use auto-flow — create ticket only and ask user
 
@@ -223,11 +246,10 @@ JIRA API 로 삭제 불가 → (a) summary 앞에 `[중복]` 접두어, (b) `tra
 
 ## Now do this
 
-1. **Read the user's request.**
-2. **Determine flow:** is one of the trigger phrases present? → Ticket+PR. Otherwise → Ticket only.
-3. **Determine issue type:** Story / Subtask / Task (and sub-rules above).
-4. **Required fields** — assignee, priority, duedate, epic (Story only). If anything missing for the chosen type, ask the user once and proceed.
-5. **Apply the rules above** strictly. For Ticket+PR flow, run steps 1–12 continuously; do **not** pause between steps unless a stop condition triggers.
-6. **At the end**, report: ticket key + URL, PR URL (if applicable), JIRA status transition, and self-review summary.
+1. **Read the user's request and dispatch** per the Mode table at the top.
+2. **For Create / Code+PR**: determine issue type (Story / Subtask / Task), check required fields (assignee, priority, duedate, epic for Story), ask once if any are missing, then proceed.
+3. **For Update**: extract `JUNGLETFT-XXX` key(s), call `getJiraIssue` to confirm current values, summarize before/after to user, then execute.
+4. **For Code+PR**: run steps 1–12 continuously; do **not** pause between steps unless a stop condition triggers.
+5. **At the end, report**: ticket key + URL, PR URL (if applicable), JIRA status changes, self-review summary (if applicable), or list of applied changes (Update mode).
 
 `$ARGUMENTS` is the user's request body — read it carefully before any tool call.

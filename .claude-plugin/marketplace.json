@@ -5,9 +5,9 @@
   },
   "plugins": [
     {
-      "name": "jira-pr",
-      "source": "./jira-pr",
-      "description": "Create JIRA tickets on JUNGLETFT (Story / Subtask / Task) and optionally implement code + open a PR + run self security review, applying KDL conventions."
+      "name": "jira",
+      "source": "./jira",
+      "description": "Single `/jira` command for JUNGLETFT — creates tickets (Story/Subtask/Task), updates existing tickets, or runs full code+PR flow with self security review. Behavior selected by your prompt."
     }
   ]
 }
