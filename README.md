@@ -1,4 +1,4 @@
-# claude-jira-pr
+# claude-jira-ticket
 
 JUNGLETFT JIRA 티켓 생성 / 수정 + (선택) 코드 수정 → PR 자동화를 **단일 `/jira-ticket` 슬래시 커맨드**로 묶은 Claude Code 플러그인.
 
@@ -39,8 +39,8 @@ JIRA 티켓 생성 / 수정 또는 코드+PR 자동화 요청 시 `/jira-ticket`
 Claude Code 안에서:
 
 ```
-/plugin marketplace add https://github.com/KDL-Solution/claude-jira-pr.git
-/plugin install jira-ticket@claude-jira-pr
+/plugin marketplace add https://github.com/KDL-Solution/claude-jira-ticket.git
+/plugin install jira-ticket@claude-jira-ticket
 ```
 
 설치 후 Claude Code 재시작 (⌘⇧P → `Developer: Reload Window`).
