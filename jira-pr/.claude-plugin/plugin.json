@@ -1,0 +1,9 @@
+{
+  "name": "jira-pr",
+  "description": "JUNGLETFT JIRA ticket creation + optional code/PR automation. Encodes KDL ticket conventions (Story/Subtask/Task structure, epic mapping, assignee IDs) and the develop-based PR flow with self security review.",
+  "version": "0.1.0",
+  "author": {
+    "name": "KDL Solution"
+  },
+  "license": "MIT"
+}

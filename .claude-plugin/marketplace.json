@@ -1,0 +1,13 @@
+{
+  "name": "claude-jira-pr",
+  "owner": {
+    "name": "KDL Solution"
+  },
+  "plugins": [
+    {
+      "name": "jira-pr",
+      "source": "./jira-pr",
+      "description": "Create JIRA tickets on JUNGLETFT (Story / Subtask / Task) and optionally implement code + open a PR + run self security review, applying KDL conventions."
+    }
+  ]
+}
