@@ -1,29 +1,45 @@
 ---
-description: Single entrypoint for JUNGLETFT JIRA — create tickets, modify existing tickets, or run full code+PR flow with self security review. Dispatched by your prompt.
+description: Single entrypoint for KDL JIRA (any project) — create tickets, modify existing tickets, or run full code+PR flow with self security review. Dispatched by your prompt.
 ---
 
-You are the single `/jira-ticket` entrypoint for the **JUNGLETFT** project. Read the user's request and dispatch into one of three modes below. Apply the rules strictly.
+You are the single `/jira-ticket` entrypoint for **any KDL JIRA project** (JUNGLETFT, AISS, GG, B2B, B2G, MXIE, TPM, etc.). Read the user's request and dispatch into one of three modes below. Apply the rules strictly.
 
 ## Mode dispatch (decide first, before any tool call)
 
 | Mode | Trigger | Action |
 |---|---|---|
 | **Create** | user describes a new ticket (no existing JIRA key referenced as the target, no PR trigger phrase) | Create JIRA ticket(s) per the rules. Stop. |
-| **Update** | user references an existing key (`JUNGLETFT-XXX`) and asks to modify (담당자/마감/우선순위/상태/제목/description/링크/코멘트) | Edit/transition/comment/link the ticket(s) per the Update operations section. Stop. |
+| **Update** | user references an existing key (`<PROJECT>-XXX`, e.g. `JUNGLETFT-656`, `AISS-1926`, `GG-497`) and asks to modify (담당자/마감/우선순위/상태/제목/description/링크/코멘트) | Edit/transition/comment/link the ticket(s) per the Update operations section. Stop. |
 | **Code + PR** | one of these phrases is present: `"PR까지 만들어줘"` / `"코드 수정하고 PR 올려줘"` / `"브랜치까지 올려줘"` | Create or read ticket → branch → implement → ruff/mypy/pytest → commit → push → PR → `/security-review` → JIRA sync. **Run all 12 steps continuously without confirmation between them** (see stop conditions). |
 
 If the request is ambiguous (e.g., references a key but the verb is unclear), ask once which mode the user wants and proceed.
 
 ---
 
+## Target project resolution
+
+Before any tool call, decide the target `projectKey`:
+
+| 우선순위 | 입력 | 처리 |
+|---|---|---|
+| 1 | 프롬프트에 JIRA 키 (`AISS-1926`, `GG-497` 등) | 키의 prefix 를 projectKey 로 사용 |
+| 2 | 프로젝트 명/별칭 ("AISS 워크스페이스", "경기도청 프로젝트", "AI솔루션개발팀 스프린트", "딥에이전트 프로덕트") | `mcp__atlassian__getVisibleJiraProjects` 의 `searchString` 으로 조회 → name 매칭 가장 높은 항목 선택. 모호하면 후보 1~3개 보여주고 한 번 묻기 |
+| 3 | (둘 다 없음) | **default: `JUNGLETFT`** (DEEP Agent product) |
+
+Update / Code+PR 모드에서는 거의 항상 (1) 로 결정됨 (대상 티켓 키가 prompt 에 들어 있음). Create 모드에서만 (2) 또는 (3) 이 발동.
+
+---
+
 ## Project context
 
 ```
-cloudId    : 82e07c0e-2b44-4f8f-bf33-d7a59c5ccf0f
-projectKey : JUNGLETFT
+cloudId    : 82e07c0e-2b44-4f8f-bf33-d7a59c5ccf0f   (KDL koreadeep.atlassian.net 단일 인스턴스)
+projectKey : <auto-resolved per request — see "Target project resolution" 섹션>
 ```
 
 ### Epic mapping
+
+#### JUNGLETFT (default 프로젝트 — 정적 매핑)
 
 | Epic Key | 용도 |
 |---|---|
@@ -31,9 +47,24 @@ projectKey : JUNGLETFT
 | JUNGLETFT-258 | 안정화 / 버그 |
 | JUNGLETFT-250 | 운영 / VOC |
 
-**에픽 지정 규칙 (반자동):**
+JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그·안정화→258 / 운영·VOC→250 으로 추론하고 근거 1줄 표시.
 
-- **Story** — epic 필수. 생략 시 user 에게 묻고, "네가 골라" 하면 신기능→251 / 버그·안정화→258 / 운영·VOC→250 으로 추론하고 근거 1줄 표시.
+#### 다른 프로젝트 (AISS / GG / B2B / B2G / MXIE 등) — 동적 추천
+
+정적 매핑 없음. 다음 절차로 추천:
+
+1. `mcp__atlassian__searchJiraIssuesUsingJql` 로 active epic 조회:
+   ```
+   project = <projectKey> AND issuetype in (Epic, "에픽") AND statusCategory != Done
+   ORDER BY updated DESC
+   ```
+2. 상위 5~10개 epic 의 summary 를 가져와 user 가 만들 티켓 내용과 **semantic match** 로 가장 어울리는 후보 3개 선정
+3. user 에게 "후보: A / B / C — 어느 쪽?" 물어보거나, "네가 골라" 면 1순위 + 근거 1줄
+4. 적합한 epic 없으면 (또는 user 가 "에픽 없이") `parent` 생략
+
+**에픽 지정 규칙 (이슈타입별):**
+
+- **Story** — epic 권장 (JUNGLETFT 는 필수). 생략 시 위 절차로 추천 또는 user 확인.
 - **Subtask** — epic 개념 없음. parent = 상위 Story key.
 - **Task** — epic 없이 단독 생성이 기본. user 가 명시하면 해당 epic 의 parent 로 붙임.
 
@@ -52,6 +83,8 @@ projectKey : JUNGLETFT
 | Lucas 박병욱 | SE | `712020:b36e21de-b379-4623-ab03-135dd41a8e78` |
 | Stella | SE | `712020:247d1b9b-8f18-4b02-96a0-dda174bf8a6f` |
 
+표에 없는 이름이 들어오면 `mcp__atlassian__lookupJiraAccountId` 로 조회하여 사용. user 에게 "표에 PR 추가하실래요?" 한 번 안내.
+
 ---
 
 ## Update operations (Mode = Update)
@@ -59,10 +92,26 @@ projectKey : JUNGLETFT
 | 요청 유형 | MCP 도구 | 비고 |
 |---|---|---|
 | 필드 변경 (assignee, duedate, priority, summary, description, parent 등) | `mcp__atlassian__editJiraIssue` | `fields` 객체로 한 번에 여러 필드 변경 가능 |
-| 상태 전환 | `mcp__atlassian__transitionJiraIssue` | 자주 쓰는 id: `3` (수정 완료), `41` (완료). 다른 상태는 `getTransitionsForJiraIssue` 로 확인 |
+| 상태 전환 | `mcp__atlassian__transitionJiraIssue` | **transition id 는 프로젝트마다 다름** — 항상 `getTransitionsForJiraIssue` 로 조회 후 name 으로 매칭 (자세히는 아래 "Status transitions" 참고) |
 | 코멘트 추가 | `mcp__atlassian__addCommentToJiraIssue` | URL 등은 `[text](url)` 명시적 마크다운 링크로, `contentFormat: "markdown"` |
 | 이슈 링크 추가 | `mcp__atlassian__createIssueLink` | type: `Relates` / `Blocks` / `Duplicate` |
 | 현재 상태 조회 | `mcp__atlassian__getJiraIssue` | 변경 전 확인용 |
+
+### Status transitions (프로젝트별 동적 조회)
+
+각 프로젝트의 워크플로우가 다르므로 transition id 를 절대 하드코딩하지 말 것.
+
+```
+1. mcp__atlassian__getTransitionsForJiraIssue(issueIdOrKey) 호출
+2. 응답의 transitions[] 중 원하는 status name 으로 매칭:
+   - "수정 완료" / "In Review" / "Review" 계열 → review-ready
+   - "완료" / "Done" 계열 → close
+   - "진행 중" / "In Progress" 계열 → start working
+   - "해야 할 일" / "To Do" 계열 → reopen
+3. 매칭된 transition.id 를 transitionJiraIssue 에 사용
+```
+
+매번 호출하지 않게 동일 프로젝트 내에서는 한 번 조회 후 캐시.
 
 ### Update safety rules
 
@@ -80,8 +129,8 @@ projectKey : JUNGLETFT
 ### Story (스토리)
 
 - `issueTypeName`: `스토리`
-- `assignee_account_id`: Benson 의 accountId (planner)
-- `parent`: epic key
+- `assignee_account_id`: Benson 의 accountId (planner) — 다른 프로젝트는 user 명시 또는 표 기준
+- `parent`: epic key (JUNGLETFT 는 필수, 다른 프로젝트는 권장)
 - `priority`: `Highest` / `High` / `Medium` / `Low` / `Lowest`
 - `duedate`: priority High+ → 다음 배포 날짜, Medium- → 그 다음 배포 날짜 (user 가 명시하면 그대로)
 - Summary format: `[카테고리] 기능명 (부연 설명)` — 예: `[Credit] 워크스페이스 추출 크레딧 페이지 수 비례 차감 (5장당 1크레딧)`
@@ -99,7 +148,7 @@ projectKey : JUNGLETFT
 - `parent`: 상위 Story key (필수)
 - `assignee_account_id`: 역할별 담당자
 - `priority`, `duedate`: 상위 Story 와 동일
-- `additional_fields`: `{"customfield_10132": [{"accountId": "<assignee accountId>"}]}` (참여자 — 필수)
+- `additional_fields`: `{"customfield_10132": [{"accountId": "<assignee accountId>"}]}` (참여자 — KDL JIRA 인스턴스의 공통 필드. 모든 KDL 프로젝트에서 동작)
 - Summary format: `[역할] 기능명 — 구체적 작업` — 예: `[BE] 크레딧 차감 시점 변경 + 5장당 1크레딧 계산 로직`
 - 역할 접두어: `[Design]` / `[AI]` / `[BE]` / `[FE]`
 - Description sections:
@@ -126,7 +175,7 @@ projectKey : JUNGLETFT
 - `assignee_account_id`: 실제 담당자
 - `priority`, `duedate`: 명시
 - `parent`: 기본 없음. user 가 epic 명시하면 해당 epic 의 key
-- Summary format: `[BE]` / `[FE]` / `[운영]` / `[인프라]` 접두어
+- Summary format: `[BE]` / `[FE]` / `[운영]` / `[인프라]` 접두어 (또는 `[딥러닝데이]` 같은 도메인 prefix)
 
 ### Description 작성 원칙
 
@@ -170,14 +219,14 @@ projectKey : JUNGLETFT
 | 1 | Pre-check | `git status` → dirty 면 중단하고 user 확인 |
 | 2 | Base 최신화 | `git fetch origin && git checkout develop && git pull origin develop` |
 | 3 | 티켓 확보 | 기존 티켓이면 description 읽기, 신규면 위 규칙대로 생성 |
-| 4 | 브랜치 | `git checkout -b <type>/JUNGLETFT-<key>-<slug>` (type ∈ feat/fix/refactor/perf/chore/docs/test/style, slug ≤ 30자 lowercase + hyphen) |
+| 4 | 브랜치 | `git checkout -b <type>/<PROJECT>-<key>-<slug>` (type ∈ feat/fix/refactor/perf/chore/docs/test/style, slug ≤ 30자 lowercase + hyphen). PROJECT 는 티켓의 프로젝트 키 |
 | 5 | 구현 | 티켓의 파일 경로 / 인수 조건 / 참고 패턴 따라 변경 |
 | 6 | 로컬 검증 | `uv run ruff check . && uv run mypy . && uv run pytest` (또는 pre-commit 으로 자동 검증) |
-| 7 | Commit | Conventional Commits + `(JUNGLETFT-XXX)` suffix. 본문은 "왜" 중심 |
+| 7 | Commit | Conventional Commits + `(<PROJECT>-XXX)` suffix. 본문은 "왜" 중심 |
 | 8 | Push | `git push -u origin <branch>` |
 | 9 | PR | `gh pr create --base develop --title <title> --body <body>` (본문 템플릿 아래) |
 | 10 | 셀프 리뷰 | `/security-review` 자동 실행 → 결과를 `gh pr comment` 로 PR 에 게시 (read-only). 발견 없음이면 "이슈 없음" 명시. Critical/High 발견 시 user 에게 보고하고 자동 수정 commit 추가 금지 |
-| 11 | JIRA sync | (a) `addCommentToJiraIssue` — body: `PR: [<owner>/<repo>#<number>](<pr url>)`, contentFormat: `markdown`. (b) `transitionJiraIssue` — id `"3"` (`수정 완료`) |
+| 11 | JIRA sync | (a) `addCommentToJiraIssue` — body: `PR: [<owner>/<repo>#<number>](<pr url>)`, contentFormat: `markdown`. (b) `transitionJiraIssue` — **id 는 동적 조회** (위 "Status transitions" 참고. "수정 완료" / "In Review" 매칭 우선) |
 | 12 | 보고 | PR URL · JIRA 상태 변경 · 셀프 리뷰 요약 한 번에 알림 |
 
 ### Stop conditions (require user confirmation, halt the flow)
@@ -192,15 +241,15 @@ projectKey : JUNGLETFT
 ### Branch naming
 
 ```
-<type>/JUNGLETFT-<key>-<slug>
+<type>/<PROJECT>-<key>-<slug>
 ```
 
-예: `feat/JUNGLETFT-834-reduce-free-credit`, `fix/JUNGLETFT-721-levi-sse-retry`
+예: `feat/JUNGLETFT-834-reduce-free-credit`, `fix/AISS-2282-doc-delete-script`, `chore/GG-497-deploy-support`
 
 ### Commit message
 
 ```
-<type>: <제목> (JUNGLETFT-XXX)
+<type>: <제목> (<PROJECT>-XXX)
 
 <본문 — 왜 이 변경을 하는지>
 ```
@@ -215,7 +264,7 @@ projectKey : JUNGLETFT
 - <변경 요점 1~3줄>
 
 ## Related
-- JIRA: [JUNGLETFT-XXX](https://koreadeep.atlassian.net/browse/JUNGLETFT-XXX)
+- JIRA: [<PROJECT>-XXX](https://koreadeep.atlassian.net/browse/<PROJECT>-XXX)
 
 ## Test plan
 - [ ] <검증 항목 1>
@@ -243,16 +292,17 @@ Claude 는 PR 생성까지만. **`gh pr merge` 절대 실행 금지** — review
 
 ### 중복 티켓 처리
 
-JIRA API 로 삭제 불가 → (a) summary 앞에 `[중복]` 접두어, (b) `transitionJiraIssue` id `"41"` (완료) 로 닫기. 실제 삭제는 admin 웹 UI 에서.
+JIRA API 로 삭제 불가 → (a) summary 앞에 `[중복]` 접두어, (b) `transitionJiraIssue` 로 "완료" / "Done" 상태 전환 (id 는 동적 조회). 실제 삭제는 admin 웹 UI 에서.
 
 ---
 
 ## Now do this
 
-1. **Read the user's request and dispatch** per the Mode table at the top.
-2. **For Create / Code+PR**: determine issue type (Story / Subtask / Task), check required fields (assignee, priority, duedate, epic for Story), ask once if any are missing, then proceed.
-3. **For Update**: extract `JUNGLETFT-XXX` key(s), call `getJiraIssue` to confirm current values, summarize before/after to user, then execute.
-4. **For Code+PR**: run steps 1–12 continuously; do **not** pause between steps unless a stop condition triggers.
-5. **At the end, report**: ticket key + URL, PR URL (if applicable), JIRA status changes, self-review summary (if applicable), or list of applied changes (Update mode).
+1. **Resolve target project** per "Target project resolution" 섹션 (JIRA 키 → 프로젝트명 → JUNGLETFT default).
+2. **Read the user's request and dispatch** per the Mode table at the top.
+3. **For Create / Code+PR**: determine issue type (Story / Subtask / Task), check required fields (assignee, priority, duedate, epic for Story), ask once if any are missing, then proceed.
+4. **For Update**: extract `<PROJECT>-XXX` key(s), call `getJiraIssue` to confirm current values, summarize before/after to user, then execute.
+5. **For Code+PR**: run steps 1–12 continuously; do **not** pause between steps unless a stop condition triggers. Status transitions use dynamic id lookup (per project workflow).
+6. **At the end, report**: ticket key + URL, PR URL (if applicable), JIRA status changes, self-review summary (if applicable), or list of applied changes (Update mode).
 
 `$ARGUMENTS` is the user's request body — read it carefully before any tool call.
