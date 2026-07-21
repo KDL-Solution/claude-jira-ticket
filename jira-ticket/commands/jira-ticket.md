@@ -66,7 +66,7 @@ JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그
 
 - **Story** — epic 권장 (JUNGLETFT 는 필수). 생략 시 위 절차로 추천 또는 user 확인.
 - **Subtask** — epic 개념 없음. parent = 상위 Story key.
-- **Task** — epic 없이 단독 생성이 기본. user 가 명시하면 해당 epic 의 parent 로 붙임.
+- **Task** — **epic 항상 지정 (필수)**. user 가 명시한 epic 이 있으면 그것을 사용. 미명시 시 JUNGLETFT 는 정적 매핑(신기능→251 / 버그·안정화→258 / 운영·VOC→250)으로 추론하고 근거 1줄 표시, 다른 프로젝트는 위 동적 추천 절차 적용. 적합한 epic 이 정말 없을 때만 user 확인 후 생략.
 
 ### Assignees
 
@@ -174,7 +174,7 @@ JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그
 - `issueTypeName`: `작업`
 - `assignee_account_id`: 실제 담당자
 - `priority`, `duedate`: 명시
-- `parent`: 기본 없음. user 가 epic 명시하면 해당 epic 의 key
+- `parent`: **epic key 필수** — user 가 명시한 epic 우선. 미명시 시 JUNGLETFT 는 정적 매핑(신기능→251 / 버그·안정화→258 / 운영·VOC→250)으로 추론(근거 1줄), 다른 프로젝트는 동적 추천 절차. 적합한 epic 이 정말 없을 때만 user 확인 후 생략
 - Summary format: `[BE]` / `[FE]` / `[운영]` / `[인프라]` 접두어 (또는 `[딥러닝데이]` 같은 도메인 prefix)
 
 ### Description 작성 원칙
