@@ -16,6 +16,36 @@ If the request is ambiguous (e.g., references a key but the verb is unclear), as
 
 ---
 
+## Search before you create (applies to every mode)
+
+**해당 업무 티켓이 이미 발급됐는지 먼저 확인한다. 있으면 그 티켓에 싱크를 맞추고, 없으면 새로 발급한다.** Never create a ticket for work that already has one — duplicates split the history and JIRA cannot delete them.
+
+Run this before the first create call, even when the user did not name a key:
+
+```
+project = <projectKey> AND created >= -7d ORDER BY created DESC
+```
+
+Widen with a text search when the work is older or the window returns nothing:
+
+```
+project = <projectKey> AND (summary ~ "<핵심어>" OR description ~ "<핵심어>") ORDER BY updated DESC
+```
+
+Match on the **work**, not on wording — the same task often carries a different summary. Then:
+
+| 상황 | 처리 |
+|---|---|
+| 대응 티켓 있음 | 그 티켓으로 Update 모드 진행. 실행 결과, 정정된 수치, 신규 발견, 남은 작업을 코멘트로 남기고 상태를 실제와 맞춘다 |
+| 여러 건이 부분적으로 겹침 | 가장 가까운 하나를 주 티켓으로 삼고 나머지는 `Relates` 로 연결. 무엇을 주 티켓으로 골랐는지 한 줄로 알린다 |
+| 없음 | 새로 발급 |
+
+**싱크는 코멘트로 한다.** 기존 description 을 통째로 덮어쓰지 않는다 — 원래 판단 근거가 사라지고 되돌릴 수 없다. 본문 수치가 틀렸으면 코멘트에 "본문 X → 실측 Y" 로 정정 표를 남긴다. description 자체를 고쳐야 하면 사용자에게 먼저 확인한다.
+
+한 세션에서 여러 갈래 작업을 했으면 **갈래마다** 위 판정을 돌린다. 하나의 티켓에 관련 없는 작업을 몰아넣지 않는다.
+
+---
+
 ## Target project resolution
 
 Before any tool call, decide the target `projectKey`:
@@ -300,9 +330,10 @@ JIRA API 로 삭제 불가 → (a) summary 앞에 `[중복]` 접두어, (b) `tra
 
 1. **Resolve target project** per "Target project resolution" 섹션 (JIRA 키 → 프로젝트명 → JUNGLETFT default).
 2. **Read the user's request and dispatch** per the Mode table at the top.
-3. **For Create / Code+PR**: determine issue type (Story / Subtask / Task), check required fields (assignee, priority, duedate, epic for Story), ask once if any are missing, then proceed.
-4. **For Update**: extract `<PROJECT>-XXX` key(s), call `getJiraIssue` to confirm current values, summarize before/after to user, then execute.
-5. **For Code+PR**: run steps 1–12 continuously; do **not** pause between steps unless a stop condition triggers. Status transitions use dynamic id lookup (per project workflow).
-6. **At the end, report**: ticket key + URL, PR URL (if applicable), JIRA status changes, self-review summary (if applicable), or list of applied changes (Update mode).
+3. **Search for an existing ticket** per "Search before you create" — 있으면 싱크, 없으면 발급. Create 로 판단했더라도 이 검색은 건너뛰지 않는다.
+4. **For Create / Code+PR**: determine issue type (Story / Subtask / Task), check required fields (assignee, priority, duedate, epic for Story), ask once if any are missing, then proceed.
+5. **For Update**: extract `<PROJECT>-XXX` key(s), call `getJiraIssue` to confirm current values, summarize before/after to user, then execute.
+6. **For Code+PR**: run steps 1–12 continuously; do **not** pause between steps unless a stop condition triggers. Status transitions use dynamic id lookup (per project workflow).
+7. **At the end, report**: ticket key + URL, PR URL (if applicable), JIRA status changes, self-review summary (if applicable), or list of applied changes (Update mode).
 
 `$ARGUMENTS` is the user's request body — read it carefully before any tool call.
