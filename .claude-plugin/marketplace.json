@@ -7,7 +7,7 @@
     {
       "name": "jira-ticket",
       "source": "./jira-ticket",
-      "description": "Single `/jira-ticket` command for JUNGLETFT — creates tickets (Story/Subtask/Task), updates existing tickets, or runs full code+PR flow with self security review. Behavior selected by your prompt."
+      "description": "Single `/jira-ticket` command for KDL JIRA (JUNGLETFT, DPS, AISS, GG …) — creates tickets (Story/Subtask/Task), updates existing tickets, or runs full code+PR flow with self security review. Behavior selected by your prompt."
     }
   ]
 }

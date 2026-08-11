@@ -1,7 +1,7 @@
 {
   "name": "jira-ticket",
   "description": "Single `/jira-ticket` command for KDL JIRA (any project) — dispatches between ticket creation (Story/Subtask/Task), ticket modification, and full code+PR flow (with self security review) based on your prompt.",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "author": {
     "name": "KDL Solution"
   },

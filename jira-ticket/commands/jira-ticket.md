@@ -2,7 +2,7 @@
 description: Single entrypoint for KDL JIRA (any project) — create tickets, modify existing tickets, or run full code+PR flow with self security review. Dispatched by your prompt.
 ---
 
-You are the single `/jira-ticket` entrypoint for **any KDL JIRA project** (JUNGLETFT, AISS, GG, B2B, B2G, MXIE, TPM, etc.). Read the user's request and dispatch into one of three modes below. Apply the rules strictly.
+You are the single `/jira-ticket` entrypoint for **any KDL JIRA project** (JUNGLETFT, DPS, AISS, GG, B2B, B2G, MXIE, TPM, etc.). Read the user's request and dispatch into one of three modes below. Apply the rules strictly.
 
 ## Mode dispatch (decide first, before any tool call)
 
@@ -54,6 +54,7 @@ Before any tool call, decide the target `projectKey`:
 |---|---|---|
 | 1 | 프롬프트에 JIRA 키 (`AISS-1926`, `GG-497` 등) | 키의 prefix 를 projectKey 로 사용 |
 | 2 | 프로젝트 명/별칭 ("AISS 워크스페이스", "경기도청 프로젝트", "AI솔루션개발팀 스프린트", "딥에이전트 프로덕트") | `mcp__atlassian__getVisibleJiraProjects` 의 `searchString` 으로 조회 → name 매칭 가장 높은 항목 선택. 모호하면 후보 1~3개 보여주고 한 번 묻기 |
+| 2-a | "DEEP Product Sprint" / "프로덕트 스프린트" / "스프린트 보드" / "DPS 백로그" | `DPS` — [board 448](https://koreadeep.atlassian.net/jira/software/projects/DPS/boards/448/backlog). DEEP 프로덕트 스프린트 실행 보드 |
 | 3 | (둘 다 없음) | **default: `JUNGLETFT`** (DEEP Agent product) |
 
 Update / Code+PR 모드에서는 거의 항상 (1) 로 결정됨 (대상 티켓 키가 prompt 에 들어 있음). Create 모드에서만 (2) 또는 (3) 이 발동.
@@ -79,6 +80,14 @@ projectKey : <auto-resolved per request — see "Target project resolution" 섹�
 
 JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그·안정화→258 / 운영·VOC→250 으로 추론하고 근거 1줄 표시.
 
+#### DPS (DEEP Product Sprint — [board 448](https://koreadeep.atlassian.net/jira/software/projects/DPS/boards/448/backlog))
+
+**에픽을 쓰지 않는 플랫 보드다.** 스프린트 백로그에 `작업` 을 바로 쌓는 구조 (team-managed). 따라서:
+
+- `parent` 를 지정하지 않는다 — 아래 "Task 는 epic 필수" 규칙의 예외.
+- 기본 이슈타입 = `작업`. Summary 는 역할 접두어로 시작: `[BE]` / `[FE]` / `[AI]` / `[Design]` (예: `[BE] 재추출 API - 변경된 구조 기준 재추출 및 결과 교체`).
+- DeepHub-API / deep-agent-uiux-nextjs 의 프로덕트 스프린트 작업은 이 프로젝트로 발급. 브랜치는 `<type>/DPS-<n>-<slug>`.
+
 #### 다른 프로젝트 (AISS / GG / B2B / B2G / MXIE 등) — 동적 추천
 
 정적 매핑 없음. 다음 절차로 추천:
@@ -96,7 +105,7 @@ JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그
 
 - **Story** — epic 권장 (JUNGLETFT 는 필수). 생략 시 위 절차로 추천 또는 user 확인.
 - **Subtask** — epic 개념 없음. parent = 상위 Story key.
-- **Task** — **epic 항상 지정 (필수)**. user 가 명시한 epic 이 있으면 그것을 사용. 미명시 시 JUNGLETFT 는 정적 매핑(신기능→251 / 버그·안정화→258 / 운영·VOC→250)으로 추론하고 근거 1줄 표시, 다른 프로젝트는 위 동적 추천 절차 적용. 적합한 epic 이 정말 없을 때만 user 확인 후 생략.
+- **Task** — **epic 항상 지정 (필수. 단 DPS 는 예외 — epic 미사용)**. user 가 명시한 epic 이 있으면 그것을 사용. 미명시 시 JUNGLETFT 는 정적 매핑(신기능→251 / 버그·안정화→258 / 운영·VOC→250)으로 추론하고 근거 1줄 표시, 다른 프로젝트는 위 동적 추천 절차 적용. 적합한 epic 이 정말 없을 때만 user 확인 후 생략.
 
 ### Assignees
 
@@ -274,7 +283,9 @@ JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그
 <type>/<PROJECT>-<key>-<slug>
 ```
 
-예: `feat/JUNGLETFT-834-reduce-free-credit`, `fix/AISS-2282-doc-delete-script`, `chore/GG-497-deploy-support`
+예: `feat/JUNGLETFT-834-reduce-free-credit`, `feat/DPS-28-template-two-tier`, `fix/AISS-2282-doc-delete-script`, `chore/GG-497-deploy-support`
+
+키는 **대문자**로 적는다 (`DPS-28`, `dps-28` 아님) — `/tempo` 가 브랜치명에서 티켓 키를 뽑아 worklog 를 붙일 때 대소문자 정규화에 의존하지 않게.
 
 ### Commit message
 

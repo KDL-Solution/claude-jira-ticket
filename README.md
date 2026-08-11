@@ -1,6 +1,6 @@
 # claude-jira-ticket
 
-JUNGLETFT JIRA 티켓 생성 / 수정 + (선택) 코드 수정 → PR 자동화를 **단일 `/jira-ticket` 슬래시 커맨드**로 묶은 Claude Code 플러그인.
+KDL JIRA (JUNGLETFT, [DPS](https://koreadeep.atlassian.net/jira/software/projects/DPS/boards/448/backlog), AISS, GG 등) 티켓 생성 / 수정 + (선택) 코드 수정 → PR 자동화를 **단일 `/jira-ticket` 슬래시 커맨드**로 묶은 Claude Code 플러그인.
 
 `/jira-ticket` 한 번이면 KDL 티켓 컨벤션(Story/Subtask/Task 구조, 에픽 매핑, 담당자 ID, description 포맷) + 기존 티켓 수정 + `develop` 기반 PR 플로우 + `/security-review` 셀프 보안 리뷰까지 자동 적용된다.
 
@@ -126,7 +126,7 @@ PR 본문에 셀프 리뷰 코멘트가 따로 붙지 않게 하려면 프롬프
 
 ## 자동화되는 KDL 컨벤션 요약
 
-- **에픽 매핑**: 추가 기능 개발 = JUNGLETFT-251, 안정화/버그 = JUNGLETFT-258, 운영/VOC = JUNGLETFT-250
+- **에픽 매핑**: 추가 기능 개발 = JUNGLETFT-251, 안정화/버그 = JUNGLETFT-258, 운영/VOC = JUNGLETFT-250. **DPS 는 에픽 미사용** — 스프린트 백로그에 `작업` 바로 발급 (board 448)
 - **에픽 지정**: Story 필수, Subtask 없음, Task 기본 없음. "네가 골라" 시 내용 기반 추론 + 근거 표시
 - **Description 포맷**: Story 는 `기능 의도 → 유저 플로우 → 기능 정책 → 구현 범위 → 인수 조건 → 참고`, Subtask 는 `구현 범위 → 참고할 기존 패턴 → 인수 조건 → 연관 이슈 → ※ 기능 의도/정책은 상위 Story 참조`
 - **Subtask 참여자 필드**: `customfield_10132` 자동 입력
