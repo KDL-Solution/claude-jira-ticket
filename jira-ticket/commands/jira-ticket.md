@@ -165,13 +165,27 @@ JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그
 
 ## Ticket creation rules (Mode = Create or Code+PR)
 
+### duedate — 모든 이슈타입 공통
+
+**생성일 + 3영업일** (주말 제외). 마감일만 보고 티켓을 언제 만들었는지 되짚기 위한 규칙이라 이슈타입·우선순위와 무관하게 같은 값을 쓴다. user 가 날짜를 명시하면 그것을 우선한다.
+
+날짜는 추측하지 말고 계산해서 얻는다:
+
+```bash
+python3 -c "import datetime as t;d=t.date.today();n=0
+while n<3: d+=t.timedelta(1); n+=d.weekday()<5
+print(d)"
+```
+
+한 세션에서 여러 티켓을 만들면 한 번만 계산해 전부 같은 값을 쓴다.
+
 ### Story (스토리)
 
 - `issueTypeName`: `스토리`
 - `assignee_account_id`: Benson 의 accountId (planner) — 다른 프로젝트는 user 명시 또는 표 기준
 - `parent`: epic key (JUNGLETFT 는 필수, 다른 프로젝트는 권장)
 - `priority`: `Highest` / `High` / `Medium` / `Low` / `Lowest`
-- `duedate`: priority High+ → 다음 배포 날짜, Medium- → 그 다음 배포 날짜 (user 가 명시하면 그대로)
+- `duedate`: 위 duedate 규칙 (생성일 + 3영업일)
 - Summary format: `[카테고리] 기능명 (부연 설명)` — 예: `[Credit] 워크스페이스 추출 크레딧 페이지 수 비례 차감 (5장당 1크레딧)`
 - Description sections **in this order**:
   1. `### 기능 의도` — 1~3 문장
@@ -186,7 +200,7 @@ JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그
 - `issueTypeName`: `하위 작업`
 - `parent`: 상위 Story key (필수)
 - `assignee_account_id`: 역할별 담당자
-- `priority`, `duedate`: 상위 Story 와 동일
+- `priority`: 상위 Story 와 동일 / `duedate`: 위 duedate 규칙 (생성일 + 3영업일)
 - `additional_fields`: `{"customfield_10132": [{"accountId": "<assignee accountId>"}]}` (참여자 — KDL JIRA 인스턴스의 공통 필드. 모든 KDL 프로젝트에서 동작)
 - Summary format: `[역할] 기능명 — 구체적 작업` — 예: `[BE] 크레딧 차감 시점 변경 + 5장당 1크레딧 계산 로직`
 - 역할 접두어: `[Design]` / `[AI]` / `[BE]` / `[FE]`
@@ -212,7 +226,7 @@ JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그
 
 - `issueTypeName`: `작업`
 - `assignee_account_id`: 실제 담당자
-- `priority`, `duedate`: 명시
+- `priority`: 명시 / `duedate`: 위 duedate 규칙 (생성일 + 3영업일)
 - `parent`: **epic key 필수** — user 가 명시한 epic 우선. 미명시 시 JUNGLETFT 는 정적 매핑(신기능→251 / 버그·안정화→258 / 운영·VOC→250)으로 추론(근거 1줄), 다른 프로젝트는 동적 추천 절차. 적합한 epic 이 정말 없을 때만 user 확인 후 생략
 - Summary format: `[BE]` / `[FE]` / `[운영]` / `[인프라]` 접두어 (또는 `[딥러닝데이]` 같은 도메인 prefix)
 
@@ -342,7 +356,7 @@ JIRA API 로 삭제 불가 → (a) summary 앞에 `[중복]` 접두어, (b) `tra
 1. **Resolve target project** per "Target project resolution" 섹션 (JIRA 키 → 프로젝트명 → JUNGLETFT default).
 2. **Read the user's request and dispatch** per the Mode table at the top.
 3. **Search for an existing ticket** per "Search before you create" — 있으면 싱크, 없으면 발급. Create 로 판단했더라도 이 검색은 건너뛰지 않는다.
-4. **For Create / Code+PR**: determine issue type (Story / Subtask / Task), check required fields (assignee, priority, duedate, epic for Story), ask once if any are missing, then proceed.
+4. **For Create / Code+PR**: determine issue type (Story / Subtask / Task), check required fields (assignee, priority, epic for Story), compute `duedate` per the duedate 규칙, ask once if any other field is missing, then proceed.
 5. **For Update**: extract `<PROJECT>-XXX` key(s), call `getJiraIssue` to confirm current values, summarize before/after to user, then execute.
 6. **For Code+PR**: run steps 1–12 continuously; do **not** pause between steps unless a stop condition triggers. Status transitions use dynamic id lookup (per project workflow).
 7. **At the end, report**: ticket key + URL, PR URL (if applicable), JIRA status changes, self-review summary (if applicable), or list of applied changes (Update mode).
