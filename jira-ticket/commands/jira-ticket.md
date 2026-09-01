@@ -82,10 +82,20 @@ JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그
 
 #### DPS (DEEP Product Sprint — [board 448](https://koreadeep.atlassian.net/jira/software/projects/DPS/boards/448/backlog))
 
-**에픽을 쓰지 않는 플랫 보드다.** 스프린트 백로그에 `작업` 을 바로 쌓는 구조 (team-managed). 따라서:
+**에픽을 쓴다** — 2026-09-01 실측 정정. 종전 기술은 "에픽을 쓰지 않는 플랫 보드" 였는데, 초기 표본(35건 전부 parent 없음)만 보고 단정한 오류였다. 지금은 **308건 중 234건이 부모를 갖는다.**
 
-- `parent` 를 지정하지 않는다 — 아래 "Task 는 epic 필수" 규칙의 예외.
-- 기본 이슈타입 = `작업`. Summary 는 역할 접두어로 시작: `[BE]` / `[FE]` / `[AI]` / `[Design]` (예: `[BE] 재추출 API - 변경된 구조 기준 재추출 및 결과 교체`).
+| Epic Key | 용도 |
+|---|---|
+| DPS-39 | 버그 수정 / 기능 개선 (공통 — 미명시 시 기본값) |
+| DPS-36 · DPS-132 | PPASS 이관 (Part 1 / Part 2) |
+| DPS-37 | SaaS 계정 통합 (마이페이지·로그인·크레딧) |
+| DPS-38 | VLMOps |
+| DPS-40 | 서버 모니터링 · 슬랙 알람 |
+
+- `parent` 를 **지정한다.** user 가 "네가 골라" 면 버그·개선은 DPS-39 를 기본으로 잡고 근거 1줄 표시. 어느 에픽에도 안 붙는 잡무만 비운다.
+- 이슈타입은 `작업` 이 기본이고, **제보성 결함은 `버그`** 로 뗀다 (23건 사용 중, 선례 DPS-62 · DPS-309 · DPS-310). 열려 있는 6종 = 에픽 · Feature · 작업 · 스토리 · 버그 · 하위 작업.
+- Summary 는 역할 접두어로 시작: `[BE]` / `[FE]` / `[AI]` / `[Design]` (예: `[BE] 재추출 API - 변경된 구조 기준 재추출 및 결과 교체`).
+- 머지했지만 prod 에 안 올라간 구간은 `배포 대기` 상태로 둔다 (`진행 중` 과 `완료` 사이에 따로 있다).
 - DeepHub-API / deep-agent-uiux-nextjs 의 프로덕트 스프린트 작업은 이 프로젝트로 발급. 브랜치는 `<type>/DPS-<n>-<slug>`.
 
 #### 다른 프로젝트 (AISS / GG / B2B / B2G / MXIE 등) — 동적 추천
@@ -105,7 +115,7 @@ JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그
 
 - **Story** — epic 권장 (JUNGLETFT 는 필수). 생략 시 위 절차로 추천 또는 user 확인.
 - **Subtask** — epic 개념 없음. parent = 상위 Story key.
-- **Task** — **epic 항상 지정 (필수. 단 DPS 는 예외 — epic 미사용)**. user 가 명시한 epic 이 있으면 그것을 사용. 미명시 시 JUNGLETFT 는 정적 매핑(신기능→251 / 버그·안정화→258 / 운영·VOC→250)으로 추론하고 근거 1줄 표시, 다른 프로젝트는 위 동적 추천 절차 적용. 적합한 epic 이 정말 없을 때만 user 확인 후 생략.
+- **Task · Bug** — **epic 항상 지정 (필수)**. user 가 명시한 epic 이 있으면 그것을 사용. 미명시 시 JUNGLETFT 는 정적 매핑(신기능→251 / 버그·안정화→258 / 운영·VOC→250), DPS 는 위 DPS 매핑표(버그·개선→DPS-39)로 추론하고 근거 1줄 표시, 다른 프로젝트는 위 동적 추천 절차 적용. 적합한 epic 이 정말 없을 때만 user 확인 후 생략.
 
 ### Assignees
 
