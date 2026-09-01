@@ -126,7 +126,7 @@ PR 본문에 셀프 리뷰 코멘트가 따로 붙지 않게 하려면 프롬프
 
 ## 자동화되는 KDL 컨벤션 요약
 
-- **에픽 매핑**: 추가 기능 개발 = JUNGLETFT-251, 안정화/버그 = JUNGLETFT-258, 운영/VOC = JUNGLETFT-250. **DPS 는 에픽 미사용** — 스프린트 백로그에 `작업` 바로 발급 (board 448)
+- **에픽 매핑**: JUNGLETFT 는 추가 기능 개발 = JUNGLETFT-251, 안정화/버그 = JUNGLETFT-258, 운영/VOC = JUNGLETFT-250. **DPS 도 에픽을 쓴다** (board 448) — 버그·개선 = DPS-39, PPASS 이관 = DPS-36·DPS-132, SaaS 계정 통합 = DPS-37, VLMOps = DPS-38, 모니터링 = DPS-40
 - **에픽 지정**: Story 필수, Subtask 없음, Task 기본 없음. "네가 골라" 시 내용 기반 추론 + 근거 표시
 - **Description 포맷**: Story 는 `기능 의도 → 유저 플로우 → 기능 정책 → 구현 범위 → 인수 조건 → 참고`, Subtask 는 `구현 범위 → 참고할 기존 패턴 → 인수 조건 → 연관 이슈 → ※ 기능 의도/정책은 상위 Story 참조`
 - **Subtask 참여자 필드**: `customfield_10132` 자동 입력
