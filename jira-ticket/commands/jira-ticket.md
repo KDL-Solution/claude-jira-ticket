@@ -175,6 +175,14 @@ JUNGLETFT 의 Story 에서 user 가 "네가 골라" → 신기능→251 / 버그
 
 ## Ticket creation rules (Mode = Create or Code+PR)
 
+### 작성일 — 모든 이슈타입 공통
+
+description 의 **첫 줄**에 `> 작성일: YYYY-MM-DD` 를 넣는다. JIRA 에 created 필드가 있어도 본문만 떼어 Confluence·Slack·PR 로 옮겨 붙이면 시점이 사라지고, 본문에 적힌 코드 근거와 수치와 결정이 언제 기준인지 알 수 없게 된다.
+
+- 날짜는 추측하지 말고 `date +%F` 로 얻는다. 한 세션에서 여러 티켓을 만들면 한 번만 얻어 전부 같은 값을 쓴다.
+- 코멘트로 싱크할 때도 첫 줄에 같은 형식을 넣는다.
+- user 가 과거 시점 기준으로 적으라고 하면 그 날짜를 쓰고 사유를 한 줄 남긴다.
+
 ### duedate — 모든 이슈타입 공통
 
 **생성일 + 3영업일** (주말 제외). 마감일만 보고 티켓을 언제 만들었는지 되짚기 위한 규칙이라 이슈타입·우선순위와 무관하게 같은 값을 쓴다. user 가 날짜를 명시하면 그것을 우선한다.
@@ -366,7 +374,7 @@ JIRA API 로 삭제 불가 → (a) summary 앞에 `[중복]` 접두어, (b) `tra
 1. **Resolve target project** per "Target project resolution" 섹션 (JIRA 키 → 프로젝트명 → JUNGLETFT default).
 2. **Read the user's request and dispatch** per the Mode table at the top.
 3. **Search for an existing ticket** per "Search before you create" — 있으면 싱크, 없으면 발급. Create 로 판단했더라도 이 검색은 건너뛰지 않는다.
-4. **For Create / Code+PR**: determine issue type (Story / Subtask / Task), check required fields (assignee, priority, epic for Story), compute `duedate` per the duedate 규칙, ask once if any other field is missing, then proceed.
+4. **For Create / Code+PR**: determine issue type (Story / Subtask / Task), check required fields (assignee, priority, epic for Story), get today's date for the `작성일` 첫 줄, compute `duedate` per the duedate 규칙, ask once if any other field is missing, then proceed.
 5. **For Update**: extract `<PROJECT>-XXX` key(s), call `getJiraIssue` to confirm current values, summarize before/after to user, then execute.
 6. **For Code+PR**: run steps 1–12 continuously; do **not** pause between steps unless a stop condition triggers. Status transitions use dynamic id lookup (per project workflow).
 7. **At the end, report**: ticket key + URL, PR URL (if applicable), JIRA status changes, self-review summary (if applicable), or list of applied changes (Update mode).
